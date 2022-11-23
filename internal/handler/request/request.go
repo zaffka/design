@@ -1,14 +1,14 @@
 package request
 
-import "time"
+import "github.com/zaffka/design/domain"
 
 type MakeOrder struct {
-	Email string    `json:"email,omitempty"`
-	From  time.Time `json:"from,omitempty"`
-	To    time.Time `json:"to,omitempty"`
-	Room  uint16    `json:"room,omitempty"`
+	Email string            `json:"email,omitempty"`
+	From  domain.CustomTime `json:"from,omitempty"`
+	To    domain.CustomTime `json:"to,omitempty"`
+	Room  uint64            `json:"room,omitempty"`
 }
 
 func (mo MakeOrder) IsValid() bool {
-	return true
+	return mo.Email != "" && !mo.From.IsZero() && !mo.To.IsZero() && mo.Room > 0
 }

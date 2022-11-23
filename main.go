@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zaffka/design/internal/handler"
+	"github.com/zaffka/design/internal/storage"
 	"github.com/zaffka/design/pkg/log"
 )
 
@@ -23,17 +24,20 @@ func main() {
 	defer rootCtxCancelFn()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/orders", handler.Orders)
+	mux.Handle("/orders", &handler.Orders{
+		RoomManager: storage.NewRooms(),
+	})
 
-	hServer := http.Server{
+	httpServer := http.Server{
 		Addr:              httpPort,
+		Handler:           mux,
 		ReadHeaderTimeout: httpReadHeaderTimeout,
 	}
 
 	go func() {
 		log.Infof("starting HTTP server at %s", httpPort)
 
-		err := hServer.ListenAndServe()
+		err := httpServer.ListenAndServe()
 		if errors.Is(err, http.ErrServerClosed) {
 			return
 		}
@@ -49,7 +53,7 @@ func main() {
 	shutCtx, shutCancelFn := context.WithTimeout(context.Background(), httpShutdownTimeout)
 	defer shutCancelFn()
 
-	if err := hServer.Shutdown(shutCtx); err != nil {
+	if err := httpServer.Shutdown(shutCtx); err != nil {
 		log.Errorf("failed to gracefully shut HTTP server, %s", err)
 	} else {
 		log.Infof("server is shut down gracefully")
